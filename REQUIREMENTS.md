@@ -13,13 +13,14 @@
 9. [实现优先级](#9-实现优先级)
 10. [节点类型详细参数](#10-节点类型详细参数)
 11. [技术架构](#11-技术架构)
-12. [错误处理](#12-错误处理)
-13. [设计原则](#13-设计原则)
-14. [交互式操作](#14-交互式操作)
-15. [帮助系统](#15-帮助系统)
-16. [Shell 自动补全](#16-shell-自动补全)
-17. [使用示例](#17-使用示例)
-18. [未来扩展](#18-未来扩展)
+12. [Mihomo 内核集成](#12-mihomo-内核集成)
+13. [错误处理](#13-错误处理)
+14. [设计原则](#14-设计原则)
+15. [交互式操作](#15-交互式操作)
+16. [帮助系统](#16-帮助系统)
+17. [Shell 自动补全](#17-shell-自动补全)
+18. [使用示例](#18-使用示例)
+19. [未来扩展](#19-未来扩展)
 
 ---
 
@@ -922,8 +923,8 @@ proxies:
 │  └── Subscription Manager  # 订阅更新                   │
 ├─────────────────────────────────────────────────────────┤
 │  Service Layer                                         │
-│  ├── Clash Process Manager # 内核进程管理               │
-│  ├── API Client            # 与 Clash API 通信         │
+│  ├── Mihomo Process Manager # Mihomo 内核进程管理      │
+│  ├── API Client            # 与 Mihomo API 通信         │
 │  └── TUN Manager           # TUN 模式控制               │
 ├─────────────────────────────────────────────────────────┤
 │  Platform Layer                                        │
@@ -933,34 +934,64 @@ proxies:
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 11.2 Clash API 接口
+### 11.2 Mihomo 内核管理
 
-工具通过 REST API 与 Clash 内核通信：
+Clash-CLI 不实现代理功能，而是管理 Mihomo 内核进程：
+
+| 功能 | 说明 |
+|------|------|
+| **下载内核** | 自动下载/更新 Mihomo 内核二进制 |
+| **启动/停止** | 管理 Mihomo 进程生命周期 |
+| **配置传递** | 生成配置并通知内核重载 |
+| **状态监控** | 通过 API 获取内核运行状态 |
+
+### 11.3 Mihomo API 接口
+
+工具通过 REST API 与 Mihomo 内核通信：
 
 | 接口 | 方法 | 说明 |
 |------|------|------|
 | `GET /proxies` | GET | 获取所有代理和代理组 |
 | `GET /proxies/:name` | GET | 获取指定代理/代理组信息 |
 | `PUT /proxies/:name` | PUT | 设置代理组当前节点 |
+| `GET /proxies/:name/delay` | GET | 测试指定代理延迟 |
 | `GET /rules` | GET | 获取所有规则 |
 | `GET /configs` | GET | 获取配置 |
 | `PUT /configs` | PUT | 更新配置 |
+| `POST /configs?force=true` | POST | 强制重载配置 |
 | `GET /traffic` | GET | 获取流量统计 |
+| `GET /connections` | GET | 获取连接列表 |
+| `DELETE /connections?id=:id` | DELETE | 关闭指定连接 |
+| `GET /dns` | GET | DNS 查询 |
 | `GET /log` | GET | 获取日志 |
 
 **默认 API 地址**：`http://127.0.0.1:9090`
 
-### 11.3 配置文件热更新
+**认证**：通过 `secret` 字段配置 API 密钥
 
-配置更新采用热更新机制，无需重启 Clash 内核：
+### 11.4 配置文件热更新
+
+配置更新采用热更新机制，无需重启 Mihomo 内核：
 
 ```
-1. 修改配置文件 → 2. 调用 API 重载配置 → 3. Clash 内核平滑更新
+1. 修改配置 → 2. 调用 API POST /configs?force=true → 3. Mihomo 平滑更新
 ```
+
+### 11.5 内核下载与更新
+
+| 平台 | 架构 | 下载 URL 模式 |
+|------|------|--------------|
+| Linux | amd64 | `https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-amd64-v{version}.gz` |
+| Linux | arm64 | `https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-linux-arm64-v{version}.gz` |
+| macOS | amd64 | `https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-darwin-amd64-v{version}.gz` |
+| macOS | arm64 | `https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-darwin-arm64-v{version}.gz` |
+| Windows | amd64 | `https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-windows-amd64-v{version}.zip` |
+
+**版本检查**：启动时对比本地版本与最新版本，提示更新
 
 ---
 
-## 12. 错误处理
+## 13. 错误处理
 
 ### 12.1 错误分类
 
@@ -1011,7 +1042,7 @@ Error: E_CONFIG_001
 
 ---
 
-## 13. 设计原则
+## 14. 设计原则
 
 ### 13.1 命令行交互原则
 
@@ -1049,7 +1080,7 @@ Error: E_CONFIG_001
 
 ---
 
-## 14. 交互式操作
+## 15. 交互式操作
 
 ### 14.1 选择式交互
 
@@ -1088,7 +1119,7 @@ $ clash rule remove
 
 ---
 
-## 15. 帮助系统
+## 16. 帮助系统
 
 ### 15.1 帮助命令格式
 
@@ -1145,7 +1176,7 @@ SEE ALSO
 
 ---
 
-## 16. Shell 自动补全
+## 17. Shell 自动补全
 
 ### 16.1 支持的 Shell
 
@@ -1180,7 +1211,7 @@ clash completion fish > ~/.config/fish/completions/clash.fish
 
 ---
 
-## 17. 使用示例
+## 18. 使用示例
 
 ### 17.1 快速上手
 
@@ -1244,7 +1275,7 @@ clash config import backup.yaml --merge
 
 ---
 
-## 18. 未来扩展
+## 19. 未来扩展
 
 ### P3 - 长期规划
 
