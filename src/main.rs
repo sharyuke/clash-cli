@@ -87,8 +87,8 @@ fn cmd_sub_list() -> Result<()> {
     println!("{:<20} {:<50} {}", "NAME", "URL", "UA");
     println!("{}", "=".repeat(80));
 
-    for sub in subscriptions {
-        let ua = sub.ua.unwrap_or_else(|| "clash.meta/v1.19.0".to_string());
+    for sub in &subscriptions {
+        let ua = sub.ua.clone().unwrap_or_else(|| "clash.meta/v1.19.0".to_string());
         println!("{:<20} {:<50} {}", sub.name, sub.url, ua);
     }
 

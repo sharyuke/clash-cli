@@ -9,19 +9,19 @@ pub enum Commands {
     Stop,
     Status,
     Node {
-        #[arg(subcommand)]
+        #[command(subcommand)]
         action: NodeAction,
     },
     Subscription {
-        #[arg(subcommand)]
+        #[command(subcommand)]
         action: SubscriptionAction,
     },
     Rule {
-        #[arg(subcommand)]
+        #[command(subcommand)]
         action: RuleAction,
     },
     Config {
-        #[arg(subcommand)]
+        #[command(subcommand)]
         action: ConfigAction,
     },
 }
